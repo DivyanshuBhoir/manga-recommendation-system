@@ -244,35 +244,68 @@
 </footer>
 
 <script>
-    function showRecommendationForm() {
-        const form = document.getElementById('recommendationForm');
-        form.style.display = form.style.display === 'block' ? 'none' : 'block';
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fetch and display recommendations when the page loads
+        fetchRecommendations();
 
-    function submitRecommendation() {
-        const title = document.getElementById('bookTitle').value;
-        const author = document.getElementById('bookAuthor').value;
-        const summary = document.getElementById('bookSummary').value;
-       
-        if (title && author && summary) {
-            const postsContainer = document.getElementById('postsContainer');
-            const newPost = document.createElement('div');
-            newPost.classList.add('post');
-            newPost.innerHTML = `
-                <h2 class="post-title">${title}</h2>
-                <p class="post-author">by ${author}</p>
-                <p class="post-content">${summary}</p>
-                <div class="comment">Thank you for your recommendation!</div>
-            `;
-            postsContainer.prepend(newPost); // Add new recommendation at the top
-            document.getElementById('recommendationForm').style.display = 'none';
-            document.getElementById('bookTitle').value = '';
-            document.getElementById('bookAuthor').value = '';
-            document.getElementById('bookSummary').value = '';
-        } else {
-            alert('Please fill in all fields before submitting.');
+        // Show or hide the recommendation form
+        window.showRecommendationForm = function () {
+            const form = document.getElementById('recommendationForm');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
-    }
+
+        // Submit a new recommendation
+        window.submitRecommendation = function () {
+            const title = document.getElementById('MangaTitle').value;
+            const author = document.getElementById('MangaAuthor').value;
+            const summary = document.getElementById('MangaSummary').value;
+       
+            if (title && author && summary) {
+                const newRecommendation = { title, author, summary };
+                fetch('/recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newRecommendation)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        fetchRecommendations(); // Refresh the recommendations list
+                        document.getElementById('recommendationForm').style.display = 'none';
+                        document.getElementById('MangaTitle').value = '';
+                        document.getElementById('MangaAuthor').value = '';
+                        document.getElementById('MangaSummary').value = '';
+                    } else {
+                        alert('Failed to submit recommendation.');
+                    }
+                });
+            } else {
+                alert('Please fill in all fields before submitting.');
+            }
+        }
+
+        // Fetch and display recommendations from the server
+        function fetchRecommendations() {
+            fetch('/recommendations')
+                .then(response => response.json())
+                .then(data => {
+                    const postsContainer = document.getElementById('postsContainer');
+                    postsContainer.innerHTML = '';
+                    data.forEach(rec => {
+                        const newPost = document.createElement('div');
+                        newPost.classList.add('post');
+                        newPost.innerHTML = `
+                            <h2 class="post-title">${rec.title}</h2>
+                            <p class="post-author">by ${rec.author}</p>
+                            <p class="post-content">${rec.summary}</p>
+                            <div class="comment">Thank you for your recommendation!</div>
+                        `;
+                        postsContainer.prepend(newPost); // Add new recommendation at the top
+                    });
+                });
+        }
+    });
 </script>
 
 </body>
